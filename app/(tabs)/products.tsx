@@ -11,10 +11,10 @@ import {
   Image,
   TextInput,
 } from "react-native";
+import { Link } from "expo-router";               // ✅ usar Link de expo-router
 import { useApi } from "../../lib/api";
-import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { useCart } from "../../stores/cart";
+import { useCart } from "../../stores/cart";      // ✅ mismo store que usas en detalle
 
 type Product = {
   id: string;
@@ -29,7 +29,6 @@ type SortBy = "name" | "price";
 
 export default function Products() {
   const { authedFetch } = useApi();
-  const router = useRouter();
   const { add } = useCart();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -57,20 +56,6 @@ export default function Products() {
     Alert.alert("Agregado", `${p.name} se añadió al carrito`);
   };
 
-  const goDetail = (p: Product) => {
-    router.push({
-      pathname: "/(tabs)/product/[id]",
-      params: {
-        id: p.id,
-        name: p.name,
-        price: String(p.price),
-        unit: p.unit ?? "",
-        imageUrl: p.imageUrl ?? "",
-        description: p.description ?? "",
-      },
-    });
-  };
-
   const products = data ?? [];
 
   const visible = useMemo(() => {
@@ -87,7 +72,6 @@ export default function Products() {
       if (sortBy === "name") {
         return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
       }
-      // sortBy === "price"
       return (a.price ?? 0) - (b.price ?? 0);
     });
 
@@ -105,14 +89,6 @@ export default function Products() {
 
   if (error) {
     const msg = (error as Error).message ?? "";
-    if (msg.includes("API 401")) {
-      router.replace("/(auth)/sign-in");
-      return (
-        <View style={{ padding: 16 }}>
-          <Text>Redirigiendo al inicio de sesión…</Text>
-        </View>
-      );
-    }
     return (
       <View style={{ padding: 16, gap: 8 }}>
         <Text style={{ fontWeight: "700" }}>Error</Text>
@@ -151,13 +127,13 @@ export default function Products() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => (
           <View style={{ padding: 14, borderWidth: 1, borderRadius: 10 }}>
-            {item.imageUrl ? (
+            {!!item.imageUrl && (
               <Image
                 source={{ uri: item.imageUrl }}
                 style={{ width: "100%", height: 140, borderRadius: 8, marginBottom: 10, backgroundColor: "#eee" }}
                 resizeMode="cover"
               />
-            ) : null}
+            )}
 
             <Text style={{ fontWeight: "700" }}>{item.name}</Text>
             <Text style={{ marginTop: 4 }}>
@@ -177,12 +153,12 @@ export default function Products() {
                 <Text style={{ textAlign: "center" }}>Agregar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => goDetail(item)}
-                style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}
-              >
-                <Text style={{ textAlign: "center" }}>Ver detalle</Text>
-              </TouchableOpacity>
+              {/* ✅ Ruta absoluta al detalle, evitando / (tabs) o objetos pathname */}
+              <Link href={`/product/${item.id}`} asChild>
+                <TouchableOpacity style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}>
+                  <Text style={{ textAlign: "center" }}>Ver detalle</Text>
+                </TouchableOpacity>
+              </Link>
             </View>
           </View>
         )}
