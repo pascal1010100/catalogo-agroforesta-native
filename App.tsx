@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+// commit de prueba desde feature/cleanup-routing-ui
 
 export default function App() {
   return (
