@@ -7,23 +7,37 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+
+ 
+    "scheme": "nutria",
+
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
+
     "ios": {
+      "bundleIdentifier": "com.pascaldev.nutria",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.pascaldev.nutria",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
   }
 }
