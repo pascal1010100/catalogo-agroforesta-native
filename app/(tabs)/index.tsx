@@ -1,30 +1,32 @@
 // app/(tabs)/index.tsx
-import { useEffect, useRef, useState } from "react";
-import { View, Text, Alert, ActivityIndicator, Button } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { View, Text, ActivityIndicator, Button, Alert } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import { useApi } from "../../lib/api";
 import { useRouter } from "expo-router";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../stores/cart"; // ✅ unificado al store
 
-/**
- * Evitamos alertas duplicadas y añadimos:
- * - Botón "Ver catálogo"
- * - Botón "Agregar demo al carrito"
- * - Botón "Ir al checkout (N)"
- */
+const DEBUG = false; // ⬅️ pon en true si quieres ver logs puntuales
+
 export default function Home() {
   const { isLoaded, isSignedIn } = useAuth();
   const { health, products, createOrder } = useApi();
-  const { addToCart, totalItems } = useCart();
+  const { items, add, /* clear, total_cents */ } = useCart();
   const router = useRouter();
 
   const [sending, setSending] = useState(false);
 
-  // Evitar alertas duplicadas
+  // Derivar totalItems del store (en caso no exista totalItems ya calculado)
+  const totalItems = useMemo(
+    () => (items ?? []).reduce((acc, it) => acc + (it.quantity ?? 0), 0),
+    [items]
+  );
+
+  // Evitar llamadas duplicadas
   const hasShownHealth = useRef(false);
   const hasShownProducts = useRef(false);
 
-  // 1) Probar /health una sola vez al montar
+  // 1) Probar /health UNA sola vez al montar (sin alerts en UI)
   useEffect(() => {
     let cancelled = false;
     if (hasShownHealth.current) return;
@@ -34,23 +36,20 @@ export default function Home() {
         const h = await health();
         if (!cancelled) {
           hasShownHealth.current = true;
-          console.log("HEALTH:", h);
-          Alert.alert("API", `Health ok: ${h.ok ? "true" : "false"}`);
+          if (DEBUG) console.log("HEALTH:", h);
         }
       } catch (e: any) {
         if (!cancelled) {
-          console.error("API ERROR /health:", e);
-          Alert.alert("API error", e?.message ?? String(e));
+          // En producción, evita alertas ruidosas:
+          if (DEBUG) console.error("API ERROR /health:", e);
         }
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [health]);
 
-  // 2) Probar /products sólo cuando Clerk esté listo y haya sesión (y una sola vez)
+  // 2) Probar /products una sola vez cuando la sesión esté lista (sin alerts)
   useEffect(() => {
     let cancelled = false;
     if (!isLoaded || !isSignedIn || hasShownProducts.current) return;
@@ -60,31 +59,28 @@ export default function Home() {
         const list = await products();
         if (!cancelled) {
           hasShownProducts.current = true;
-          console.log("PRODUCTS:", list);
-          Alert.alert("API protegida", `Productos recibidos: ${list.length}`);
+          if (DEBUG) console.log("PRODUCTS(len):", list?.length ?? 0, list);
         }
       } catch (e: any) {
         if (!cancelled) {
-          console.error("API ERROR /products:", e);
-          Alert.alert("API error", e?.message ?? String(e));
+          if (DEBUG) console.error("API ERROR /products:", e);
         }
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, products]);
 
-  // 3) Botón demo: agrega 2 productos al carrito para poder probar el checkout
+  // 3) Botón demo: agrega productos al carrito (usa el contrato del store)
   function handleAddDemo() {
-    addToCart({ id: "p1", name: "Cacao en grano", price: 19.9, qty: 1 });
-    addToCart({ id: "p2", name: "Café orgánico", price: 14.5, qty: 2 });
-    Alert.alert("Carrito", "Agregados productos de demo.");
+    add({ id: "p1", name: "Cacao en grano", price_cents: 1990, quantity: 1 });
+    add({ id: "p2", name: "Café orgánico",  price_cents: 1450, quantity: 2 });
+    Alert.alert("Carrito", "Se agregaron productos de demo.");
   }
 
-  // 4) (Sigue disponible) Botón: crear pedido de prueba directo (opcional)
+  // 4) (Opcional solo debug) Crear pedido directo para pruebas
   async function handleTestOrder() {
+    if (!DEBUG) return; // ⬅️ desactivado por defecto para no romper el flujo normal
     try {
       if (!isLoaded) return Alert.alert("Clerk", "Cargando sesión...");
       if (!isSignedIn) return Alert.alert("Clerk", "Inicia sesión primero.");
@@ -117,7 +113,7 @@ export default function Home() {
 
       <View style={{ height: 12 }} />
 
-      {/* Nuevo: botón para ir al catálogo */}
+      {/* Ir al catálogo */}
       <Button title="Ver catálogo" onPress={() => router.push("/products")} />
 
       <View style={{ height: 8 }} />
@@ -132,13 +128,16 @@ export default function Home() {
         disabled={totalItems === 0}
       />
 
-      <View style={{ height: 8 }} />
-
-      <Button
-        title={sending ? "Enviando..." : "Crear pedido de prueba (directo)"}
-        onPress={handleTestOrder}
-        disabled={sending}
-      />
+      {DEBUG && (
+        <>
+          <View style={{ height: 8 }} />
+          <Button
+            title={sending ? "Enviando..." : "Crear pedido de prueba (directo)"}
+            onPress={handleTestOrder}
+            disabled={sending}
+          />
+        </>
+      )}
     </View>
   );
 }
