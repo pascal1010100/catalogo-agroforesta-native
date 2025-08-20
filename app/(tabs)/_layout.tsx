@@ -2,12 +2,10 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { View, Text } from "react-native";
-import { useCart } from "../../stores/cart"; // 👈 usa tu store de Zustand
+import { useCart } from "../../stores/cart";
 
 function CartIcon({ color, focused }: { color: string; focused: boolean }) {
-  // Items del Zustand store
   const { items } = useCart();
-  // Sumamos cantidades (no solo líneas)
   const count = items.reduce((acc, it) => acc + (it.quantity ?? 0), 0);
 
   return (
@@ -39,9 +37,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: true,
+        headerShown: false,          // puedes volverlo true si lo prefieres
         tabBarActiveTintColor: "#0a84ff",
         tabBarInactiveTintColor: "#8e8e93",
+        tabBarHideOnKeyboard: true,
+        sceneStyle: { flex: 1 },     // clave: asegura layout flexible
       }}
     >
       <Tabs.Screen
@@ -54,7 +54,6 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Catálogo */}
       <Tabs.Screen
         name="products"
         options={{

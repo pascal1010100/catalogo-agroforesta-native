@@ -3,7 +3,7 @@ import { Slot, Redirect } from "expo-router";
 import {
   ClerkProvider,
   ClerkLoaded,
-  ClerkLoading, // 👈 IMPORTA ESTO
+  ClerkLoading,
   SignedIn,
   SignedOut,
 } from "@clerk/clerk-expo";
@@ -33,7 +33,6 @@ export default function RootLayout() {
     );
   }
 
-  // Usa tu scheme (nutria) y la ruta estándar
   const redirectUrl = makeRedirectUri({
     scheme: process.env.APP_SCHEME,
     path: "oauth-native-callback",
@@ -56,15 +55,15 @@ export default function RootLayout() {
       <ClerkLoaded>
         <QueryClientProvider client={queryClient}>
           <CartProvider>
+            {/* 🔒 Si no ha iniciado sesión → ir a login */}
             <SignedOut>
               <Redirect href="/(auth)/sign-in" />
             </SignedOut>
 
+            {/* ✅ Si está logueado → renderiza la app (incluye Tabs) */}
             <SignedIn>
-              <Redirect href="/(tabs)" />
+              <Slot />
             </SignedIn>
-
-            <Slot />
           </CartProvider>
         </QueryClientProvider>
       </ClerkLoaded>
