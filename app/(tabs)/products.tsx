@@ -145,69 +145,68 @@ export default function Products() {
 
       {/* Lista */}
       <FlatList
-        data={visible}
-        keyExtractor={(p) => p.id}
-        renderItem={({ item }) => (
-          <View style={{ padding: 14, borderWidth: 1, borderRadius: 10 }}>
-            {!!item.imageUrl && (
-              <Image
-                source={{ uri: item.imageUrl }}
-                style={{
-                  width: "100%",
-                  height: 140,
-                  borderRadius: 8,
-                  marginBottom: 10,
-                  backgroundColor: "#eee",
-                }}
-                resizeMode="cover"
-              />
-            )}
+  data={visible}
+  keyExtractor={(p) => p.id}
+  renderItem={({ item }) => (
+    <View style={{ padding: 14, borderWidth: 1, borderRadius: 10 }}>
+      {!!item.imageUrl && (
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={{ width: "100%", height: 140, borderRadius: 8, marginBottom: 10, backgroundColor: "#eee" }}
+          resizeMode="cover"
+        />
+      )}
 
-            <Text style={{ fontWeight: "700" }}>{item.name}</Text>
-            <Text style={{ marginTop: 4 }}>
-              Precio: {Number.isFinite(item.price) ? item.price : 0}
-              {item.unit ? ` / ${item.unit}` : ""}
-            </Text>
+      <Text style={{ fontWeight: "700" }}>{item.name}</Text>
+      <Text style={{ marginTop: 4 }}>
+        Precio: {Number.isFinite(item.price) ? item.price : 0}
+        {item.unit ? ` / ${item.unit}` : ""}
+      </Text>
 
-            {!!item.description && (
-              <Text numberOfLines={2} style={{ marginTop: 6, color: "#666" }}>
-                {item.description}
-              </Text>
-            )}
+      {!!item.description && (
+        <Text numberOfLines={2} style={{ marginTop: 6, color: "#666" }}>
+          {item.description}
+        </Text>
+      )}
 
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-              <TouchableOpacity
-                onPress={() => onAdd(item)}
-                style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}
-              >
-                <Text style={{ textAlign: "center" }}>Agregar</Text>
-              </TouchableOpacity>
+      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+        <TouchableOpacity
+          onPress={() => onAdd(item)}
+          style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}
+        >
+          <Text style={{ textAlign: "center" }}>Agregar</Text>
+        </TouchableOpacity>
 
-              <Link href={`/product/${item.id}`} asChild>
-                <TouchableOpacity style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}>
-                  <Text style={{ textAlign: "center" }}>Ver detalle</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-          </View>
-        )}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        ListEmptyComponent={() => (
-          <View style={{ padding: 24, alignItems: "center" }}>
-            <Text style={{ color: "#666" }}>No hay productos para mostrar.</Text>
-          </View>
-        )}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        // 👇 Claves anti-bloqueo
-        contentContainerStyle={{ paddingBottom: 120, paddingTop: 4 }}
-        showsVerticalScrollIndicator={false}
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-        // Performance
-        initialNumToRender={8}
-        windowSize={10}
-        removeClippedSubviews
-      />
+        <Link href={`/product/${item.id}`} asChild>
+          <TouchableOpacity style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}>
+            <Text style={{ textAlign: "center" }}>Ver detalle</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+    </View>
+  )}
+  ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+  ListEmptyComponent={() => (
+    <View style={{ padding: 24, alignItems: "center" }}>
+      <Text style={{ color: "#666" }}>No hay productos para mostrar.</Text>
+    </View>
+  )}
+  refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+
+  /* 👇 claves anti-bloqueo */
+  style={{ flex: 1 }}
+  contentContainerStyle={{ paddingBottom: 120, paddingTop: 4, flexGrow: 1 }}
+  showsVerticalScrollIndicator={false}
+  keyboardDismissMode="on-drag"
+  keyboardShouldPersistTaps="handled"
+  nestedScrollEnabled
+
+  /* performance */
+  initialNumToRender={8}
+  windowSize={10}
+  removeClippedSubviews
+/>
+
     </View>
   );
 }
