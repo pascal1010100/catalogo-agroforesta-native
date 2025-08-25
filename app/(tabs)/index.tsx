@@ -9,15 +9,16 @@ import {
   Keyboard,
   ImageSourcePropType,
   StatusBar,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";
 import { useApi } from "../../lib/api";
 import { useCart } from "../../stores/cart";
-import SearchBar from "../components/SearchBar";
-import Chip from "../components/ui/Chip";
-import Fab from "../components/ui/Fab";
-import CategoryCard from "../components/ui/CategoryCard";
+
+import SearchBar from "../../app/components/SearchBar";
+import Fab from "../../app/components/ui/Fab";
+import CategoryCard from "../../app/components/ui/CategoryCard";
 import { styles } from "../../styles/styles";
 
 type Category = {
@@ -27,7 +28,6 @@ type Category = {
   emoji: string;
 };
 
-// Coloca estos PNG en: assets/icons/categorias/*.png
 const ICONS: Record<Category["slug"], ImageSourcePropType> = {
   maquinaria: require("../../assets/icons/categorias/maquinaria.png"),
   fertilizantes: require("../../assets/icons/categorias/fertilizantes.png"),
@@ -67,12 +67,9 @@ export default function Home() {
     router.push({ pathname: "/products", params: { q } });
   };
 
-  const goCheckout = () => router.push("/checkout");
-  const goOrders = () => router.push("/orders");
-  const goProfile = () => router.push("/profile");
   const goCart = () => router.push("/cart");
 
-  // Demo robusto
+  // (opcional dev) long‑press en el brand para agregar items demo
   const addDemo = () => {
     const i1 = { id: "demo-1", title: "Producto demo 1", price_cents: 1500, quantity: 1, image_url: "" } as any;
     const i2 = { id: "demo-2", title: "Producto demo 2", price_cents: 2300, quantity: 1, image_url: "" } as any;
@@ -88,7 +85,7 @@ export default function Home() {
         desc={item.desc}
         src={src}
         emoji={item.emoji}
-        onPress={() => router.push({ pathname: "/categories", params: { c: item.slug } })}
+        onPress={() => router.push(`/categories/${item.slug}`)}  {...CATEGORIES}
       />
     );
   };
@@ -105,9 +102,11 @@ export default function Home() {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.brand}>
-            <Text style={styles.brandLeaf}>🟢</Text> Agroforesta
-          </Text>
+          <Pressable onLongPress={addDemo} hitSlop={8}>
+            <Text style={styles.brand}>
+              <Text style={styles.brandLeaf}>🟢</Text> Agroforesta
+            </Text>
+          </Pressable>
           <View style={styles.sessionPill}>
             <Text style={styles.sessionText}>{isLoaded ? (isSignedIn ? "Sesión" : "Invitado") : "…"}</Text>
           </View>
@@ -122,20 +121,12 @@ export default function Home() {
         />
 
         {/* Hero */}
-        <View style={styles.hero}>
+        <View style={[styles.hero, { marginBottom: 6 }]}>
           <Text style={styles.title}>Catálogo Nativo</Text>
           <Text style={styles.subtitle}>Explora por categorías o busca productos.</Text>
         </View>
 
-        {/* Acciones rápidas */}
-        <View style={styles.quickRow}>
-          <Chip label={`Checkout (${totalItems})`} onPress={goCheckout} />
-          <Chip label="Pedidos" onPress={goOrders} />
-          <Chip label="Perfil" onPress={goProfile} />
-          <Chip label="Agregar demo" onPress={addDemo} />
-        </View>
-
-        {/* Categorías */}
+        {/* Grid de categorías */}
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Nuestras categorías</Text>
         </View>
