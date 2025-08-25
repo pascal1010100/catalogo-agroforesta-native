@@ -1,60 +1,65 @@
 // app/(tabs)/categories.tsx
-import { useQuery } from "@tanstack/react-query";
-import { View, Text, ActivityIndicator, FlatList, TouchableOpacity } from "react-native";
-import { useApi } from "../../lib/api";
+import React from "react";
+import { FlatList, ImageSourcePropType } from "react-native";
 import { useRouter } from "expo-router";
 
-type Category = { id: string; name: string };
+import BaseScreen from "../components/layout/BaseScreen";
+import SectionTitle from "../components/ui/SectionTitle";
+import CategoryCard from "../components/ui/CategoryCard";
+import { styles } from "../../styles/styles";
 
-export default function Categories() {
-  const { authedFetch } = useApi();
+type Category = {
+  slug: "maquinaria" | "fertilizantes" | "herramientas" | "frutas" | "verduras" | "semillas";
+  title: string;
+  desc: string;
+  emoji: string;
+};
+
+// PNGs en: assets/icons/categorias/*.png
+const ICONS: Record<Category["slug"], ImageSourcePropType> = {
+  maquinaria: require("../../assets/icons/categorias/maquinaria.png"),
+  fertilizantes: require("../../assets/icons/categorias/fertilizantes.png"),
+  herramientas: require("../../assets/icons/categorias/herramientas.png"),
+  frutas: require("../../assets/icons/categorias/frutas.png"),
+  verduras: require("../../assets/icons/categorias/verduras.png"),
+  semillas: require("../../assets/icons/categorias/semillas.png"),
+};
+
+const CATEGORIES: Category[] = [
+  { slug: "maquinaria", title: "Maquinaria", desc: "Agrícola de última generación.", emoji: "🚜" },
+  { slug: "fertilizantes", title: "Fertilizantes", desc: "Para todo tipo de cultivos.", emoji: "🧪" },
+  { slug: "herramientas", title: "Herramientas", desc: "Resistentes y confiables.", emoji: "🛠️" },
+  { slug: "frutas", title: "Frutas", desc: "Frescas y de temporada.", emoji: "🍎" },
+  { slug: "verduras", title: "Verduras", desc: "Orgánicas y saludables.", emoji: "🥦" },
+  { slug: "semillas", title: "Semillas", desc: "Certificadas para siembra.", emoji: "🌱" },
+];
+
+export default function CategoriesScreen() {
   const router = useRouter();
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => authedFetch<Category[]>("/categories", { method: "GET" }),
-  });
-
-  if (isLoading || isRefetching) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
-        <Text style={{ marginTop: 8 }}>Cargando categorías…</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={{ padding: 16 }}>
-        <Text style={{ fontWeight: "700" }}>Error</Text>
-        <Text selectable>{(error as Error).message}</Text>
-        <TouchableOpacity onPress={() => refetch()} style={{ marginTop: 10, padding: 12, borderWidth: 1, borderRadius: 10 }}>
-          <Text>Reintentar</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const categories = data ?? [];
-
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>Categorías</Text>
+    <BaseScreen>
+      <SectionTitle>Categorías</SectionTitle>
 
       <FlatList
-        data={categories}
-        keyExtractor={(c) => c.id}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        data={CATEGORIES}
+        keyExtractor={(it) => it.slug}
+        numColumns={2}
+        columnWrapperStyle={styles.gridRow}
+        contentContainerStyle={styles.gridContent}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => router.push({ pathname: "/(tabs)/category/[name]", params: { name: item.name } })}
-            style={{ padding: 14, borderWidth: 1, borderRadius: 10 }}
-          >
-            <Text style={{ fontWeight: "700" }}>{item.name}</Text>
-          </TouchableOpacity>
+          <CategoryCard
+            title={item.title}
+            desc={item.desc}
+            src={ICONS[item.slug]}
+            emoji={item.emoji}
+            onPress={() =>
+              router.push({ pathname: "/categories", params: { c: item.slug } })
+            }
+          />
         )}
+        showsVerticalScrollIndicator={false}
       />
-    </View>
+    </BaseScreen>
   );
 }

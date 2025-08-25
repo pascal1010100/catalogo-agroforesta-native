@@ -1,0 +1,115 @@
+// styles/styles.ts
+import { StyleSheet } from "react-native";
+import { theme } from "./theme";
+
+export const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.colors.bg },
+  container: { flex: 1, paddingHorizontal: theme.spacing.xxxl, paddingTop: theme.spacing.md },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: theme.spacing.lg,
+  },
+  brand: { color: "#1e2e24", fontSize: theme.font.lg, fontWeight: "700" },
+  brandLeaf: { marginRight: theme.spacing.sm, fontSize: theme.font.sm },
+  sessionPill: {
+    backgroundColor: theme.colors.brandLite,
+    paddingHorizontal: 10,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.full,
+  },
+  sessionText: { color: theme.colors.brand, fontWeight: "700", fontSize: theme.font.xs },
+
+  hero: { marginTop: theme.spacing.xl, marginBottom: theme.spacing.lg },
+  title: { color: theme.colors.text, fontSize: theme.font.xl, fontWeight: "800" },
+  subtitle: { color: theme.colors.textMuted, marginTop: theme.spacing.sm, fontSize: theme.font.sm },
+
+  quickRow: { flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.lg, marginTop: theme.spacing.md, marginBottom: theme.spacing.lg },
+  chip: {
+    backgroundColor: theme.colors.chipBg,
+    borderColor: theme.colors.chipBorder,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.full,
+  },
+  chipPressed: { opacity: 0.8 },
+  chipText: { color: "#1f4c37", fontWeight: "700", fontSize: theme.font.xs },
+
+  sectionHead: { marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
+  sectionTitle: { color: "#1f4c37", fontSize: theme.font.md, fontWeight: "800" },
+
+  gridContent: { paddingBottom: 120 },
+  gridRow: { gap: theme.spacing.lg },
+
+  card: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.surfaceBorder,
+    borderWidth: 1,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    minHeight: 130,
+    justifyContent: "flex-start",
+    shadowColor: theme.shadow.card.color,
+    shadowOpacity: theme.shadow.card.opacity,
+    shadowOffset: theme.shadow.card.offset,
+    shadowRadius: theme.shadow.card.radius,
+    elevation: theme.shadow.card.elevation,
+  },
+  cardPressed: { opacity: 0.95 },
+  cardImg: { width: 56, height: 56, marginBottom: theme.spacing.lg, alignSelf: "flex-start" },
+  cardIcon: { fontSize: 28, marginBottom: theme.spacing.lg },
+  cardTitle: { color: theme.colors.text, fontWeight: "800", fontSize: theme.font.md, marginBottom: theme.spacing.sm },
+  cardDesc: { color: "#5c7e6c", fontSize: theme.font.xs, lineHeight: 16 },
+
+  fab: {
+    position: "absolute",
+    right: theme.spacing.xxxl,
+    bottom: 28,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.brand,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: theme.shadow.fab.color,
+    shadowOpacity: theme.shadow.fab.opacity,
+    shadowOffset: theme.shadow.fab.offset,
+    shadowRadius: theme.shadow.fab.radius,
+    elevation: theme.shadow.fab.elevation,
+  },
+  fabIcon: { fontSize: theme.font.fabIcon, color: theme.colors.brandOn },
+
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.brand,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.sm,
+  },
+  badgeText: { color: theme.colors.brand, fontSize: theme.font.badge, fontWeight: "800" },
+
+  apiWarn: {
+    position: "absolute",
+    left: theme.spacing.xxxl,
+    right: theme.spacing.xxxl,
+    bottom: 96,
+    backgroundColor: theme.colors.warnBg,
+    borderColor: theme.colors.warnBorder,
+    borderWidth: 1,
+    borderRadius: theme.radius.md,
+    padding: 10,
+  },
+  apiWarnText: { color: theme.colors.warnText, textAlign: "center", fontWeight: "700" },
+});

@@ -1,7 +1,17 @@
 // app/(tabs)/cart.tsx
-import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
-import { useState } from "react";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Alert,
+  ActivityIndicator,
+  Pressable,
+} from "react-native";
 import { useRouter } from "expo-router";
+import BaseScreen from "../components/layout/BaseScreen";
+import SectionTitle from "../components/ui/SectionTitle";
+import { styles } from "../../styles/styles";
 import { useCart } from "../../stores/cart";
 import { useApi } from "../../lib/api";
 
@@ -12,14 +22,13 @@ function moneyQ(q: number) {
 export default function CartScreen() {
   const router = useRouter();
   const { authedFetch } = useApi();
-
   const { items, setQuantity, remove, clear, totalCents } = useCart();
   const [submitting, setSubmitting] = useState(false);
 
   const total = totalCents() / 100;
 
   const inc = (id: string, qty: number) => setQuantity(id, qty + 1);
-  const dec = (id: string, qty: number) => setQuantity(id, qty - 1); // si llega a 0, tu store lo elimina
+  const dec = (id: string, qty: number) => setQuantity(id, Math.max(0, qty - 1)); // tu store elimina si llega a 0
 
   const checkout = async () => {
     if (!items.length) return;
@@ -35,13 +44,10 @@ export default function CartScreen() {
         })),
       };
 
-      const order = await authedFetch<{
-        id: number | string;
-        total_cents: number;
-      }>("/orders", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const order = await authedFetch<{ id: number | string; total_cents: number }>(
+        "/orders",
+        { method: "POST", body: JSON.stringify(payload) }
+      );
 
       clear();
       Alert.alert("Pedido creado", `#${order.id} por ${moneyQ(order.total_cents / 100)}`);
@@ -55,54 +61,66 @@ export default function CartScreen() {
 
   if (items.length === 0) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}>
-        <Text style={{ fontSize: 16, color: "#666" }}>Tu carrito está vacío.</Text>
-      </View>
+      <BaseScreen>
+        <SectionTitle>Carrito</SectionTitle>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Tu carrito está vacío</Text>
+          <Text style={styles.cardDesc}>Agrega productos desde el catálogo.</Text>
+        </View>
+      </BaseScreen>
     );
   }
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>Carrito</Text>
+    <BaseScreen>
+      <SectionTitle>Carrito</SectionTitle>
 
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        contentContainerStyle={styles.gridContent}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         renderItem={({ item }) => (
-          <View style={{ padding: 14, borderWidth: 1, borderRadius: 10 }}>
-            <Text style={{ fontWeight: "700" }}>{item.name}</Text>
-            <Text>Precio: {moneyQ(item.price_cents / 100)}</Text>
-            <Text style={{ marginTop: 4 }}>Cantidad:</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardDesc}>Precio: {moneyQ(item.price_cents / 100)}</Text>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 }}>
-              <TouchableOpacity
+            <View style={[styles.quickRow, { alignItems: "center", marginTop: 8 }]}>
+              {/* - */}
+              <Pressable
                 onPress={() => dec(item.id, item.quantity)}
-                style={{ paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderRadius: 8 }}
+                style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+                accessibilityLabel="Disminuir cantidad"
               >
-                <Text>-</Text>
-              </TouchableOpacity>
+                <Text style={styles.chipText}>−</Text>
+              </Pressable>
 
-              <Text style={{ minWidth: 28, textAlign: "center", fontWeight: "700" }}>{item.quantity}</Text>
+              {/* Cantidad */}
+              <Text style={[styles.cardTitle, { minWidth: 32, textAlign: "center" }]}>
+                {item.quantity}
+              </Text>
 
-              <TouchableOpacity
+              {/* + */}
+              <Pressable
                 onPress={() => inc(item.id, item.quantity)}
-                style={{ paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderRadius: 8 }}
+                style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+                accessibilityLabel="Aumentar cantidad"
               >
-                <Text>+</Text>
-              </TouchableOpacity>
+                <Text style={styles.chipText}>+</Text>
+              </Pressable>
 
               <View style={{ flex: 1 }} />
 
-              <TouchableOpacity
+              {/* Quitar */}
+              <Pressable
                 onPress={() => remove(item.id)}
-                style={{ paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderRadius: 8 }}
+                style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
               >
-                <Text>Quitar</Text>
-              </TouchableOpacity>
+                <Text style={styles.chipText}>Quitar</Text>
+              </Pressable>
             </View>
 
-            <Text style={{ marginTop: 8, fontWeight: "700" }}>
+            <Text style={[styles.cardTitle, { marginTop: 10 }]}>
               Subtotal: {moneyQ((item.price_cents * item.quantity) / 100)}
             </Text>
           </View>
@@ -110,28 +128,27 @@ export default function CartScreen() {
       />
 
       {/* Total + Checkout */}
-      <View style={{ borderTopWidth: 1, marginTop: 14, paddingTop: 12 }}>
-        <Text style={{ fontSize: 18, fontWeight: "800" }}>Total: {moneyQ(total)}</Text>
+      <View style={[styles.card, { marginTop: 12 }]}>
+        <Text style={styles.cardTitle}>Total: {moneyQ(total)}</Text>
 
-        <TouchableOpacity
+        <Pressable
           onPress={checkout}
           disabled={submitting || items.length === 0}
-          style={{
-            marginTop: 10,
-            padding: 14,
-            borderRadius: 10,
-            backgroundColor: submitting || items.length === 0 ? "#999" : "#0a84ff",
-          }}
+          style={({ pressed }) => [
+            styles.chip,
+            { justifyContent: "center", marginTop: 12, backgroundColor: submitting || items.length === 0 ? "#ccd6cc" : "#2e7d32" },
+            pressed && { opacity: 0.9 },
+          ]}
         >
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={{ color: "white", textAlign: "center", fontWeight: "700" }}>
+            <Text style={[styles.chipText, { color: "#fff", textAlign: "center" }]}>
               Realizar pedido
             </Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
-    </View>
+    </BaseScreen>
   );
 }

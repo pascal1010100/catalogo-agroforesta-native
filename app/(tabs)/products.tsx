@@ -1,18 +1,15 @@
 // app/(tabs)/products.tsx
+import React, { useMemo, useState } from "react";
+import { View, Text, ActivityIndicator, FlatList, RefreshControl, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  Alert,
-  Image,
-  TextInput,
-} from "react-native";
-import { Link } from "expo-router";
-import { useMemo, useState } from "react";
+
+import BaseScreen from "../components/layout/BaseScreen";
+import SectionTitle from "../components/ui/SectionTitle";
+import ProductCard from "../components/ui/ProductCard";
+import SearchBar from "../components/SearchBar";
+import { styles } from "../../styles/styles";
+
 import { useApi } from "../../lib/api";
 import { useCart } from "../../stores/cart";
 
@@ -27,7 +24,12 @@ type Product = {
 
 type SortBy = "name" | "price";
 
+function moneyQ(q: number) {
+  return `Q ${q.toFixed(2)}`;
+}
+
 export default function Products() {
+  const router = useRouter();
   const { authedFetch } = useApi();
   const { add } = useCart();
 
@@ -56,15 +58,14 @@ export default function Products() {
       name: p.name,
       price_cents: Math.round(price * 100),
       quantity: 1,
-    });
-    Alert.alert("Agregado", `${p.name} se añadió al carrito`);
+      image_url: p.imageUrl ?? "",
+    } as any);
   };
 
   const products = data ?? [];
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-
     const filtered = q
       ? products.filter((p) => {
           const n = p.name?.toLowerCase() ?? "";
@@ -74,9 +75,7 @@ export default function Products() {
       : products.slice();
 
     filtered.sort((a, b) => {
-      if (sortBy === "name") {
-        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
-      }
+      if (sortBy === "name") return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
       const ap = Number.isFinite(a.price) ? a.price : 0;
       const bp = Number.isFinite(b.price) ? b.price : 0;
       return ap - bp;
@@ -87,126 +86,90 @@ export default function Products() {
 
   if (isLoading || isRefetching) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}>
-        <ActivityIndicator />
-        <Text style={{ marginTop: 8 }}>Cargando productos…</Text>
-      </View>
+      <BaseScreen>
+        <SectionTitle>Catálogo</SectionTitle>
+        <View style={styles.card}>
+          <ActivityIndicator />
+          <Text style={[styles.cardDesc, { marginTop: 8 }]}>Cargando productos…</Text>
+        </View>
+      </BaseScreen>
     );
   }
 
   if (error) {
     const msg = (error as Error)?.message ?? "Error desconocido";
     return (
-      <View style={{ flex: 1, padding: 16, gap: 10, justifyContent: "center" }}>
-        <Text style={{ fontWeight: "700", fontSize: 16 }}>Error</Text>
-        <Text selectable style={{ color: "#555" }}>{msg}</Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          style={{ padding: 12, borderWidth: 1, borderRadius: 10, alignSelf: "flex-start" }}
-        >
-          <Text>Reintentar</Text>
-        </TouchableOpacity>
-      </View>
+      <BaseScreen>
+        <SectionTitle>Catálogo</SectionTitle>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>No se pudo cargar el catálogo</Text>
+          <Text selectable style={styles.cardDesc}>{msg}</Text>
+
+          <Pressable
+            onPress={() => refetch()}
+            style={({ pressed }) => [styles.chip, pressed && styles.chipPressed, { alignSelf: "flex-start", marginTop: 10 }]}
+          >
+            <Text style={styles.chipText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      </BaseScreen>
     );
   }
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      {/* Encabezado */}
-      <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>Catálogo</Text>
+    <BaseScreen>
+      <SectionTitle>Catálogo</SectionTitle>
 
       {/* Controles */}
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 10 }}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Buscar por nombre o descripción…"
-          returnKeyType="search"
-          style={{
-            flex: 1,
-            borderWidth: 1,
-            borderRadius: 8,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-          }}
-        />
-        <TouchableOpacity
+      <View style={[styles.quickRow, { marginBottom: 10, alignItems: "center" }]}>
+        <View style={{ flex: 1 }}>
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            onSubmit={() => {}}
+            placeholder="Buscar por nombre o descripción…"
+          />
+        </View>
+
+        <Pressable
           onPress={() => setSortBy(sortBy === "name" ? "price" : "name")}
-          style={{
-            paddingHorizontal: 12,
-            borderWidth: 1,
-            borderRadius: 8,
-            justifyContent: "center",
-          }}
+          style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
         >
-          <Text>{sortBy === "name" ? "↕️ Nombre" : "↕️ Precio"}</Text>
-        </TouchableOpacity>
+          <Text style={styles.chipText}>{sortBy === "name" ? "↕️ Nombre" : "↕️ Precio"}</Text>
+        </Pressable>
       </View>
 
       {/* Lista */}
       <FlatList
-  data={visible}
-  keyExtractor={(p) => p.id}
-  renderItem={({ item }) => (
-    <View style={{ padding: 14, borderWidth: 1, borderRadius: 10 }}>
-      {!!item.imageUrl && (
-        <Image
-          source={{ uri: item.imageUrl }}
-          style={{ width: "100%", height: 140, borderRadius: 8, marginBottom: 10, backgroundColor: "#eee" }}
-          resizeMode="cover"
-        />
-      )}
-
-      <Text style={{ fontWeight: "700" }}>{item.name}</Text>
-      <Text style={{ marginTop: 4 }}>
-        Precio: {Number.isFinite(item.price) ? item.price : 0}
-        {item.unit ? ` / ${item.unit}` : ""}
-      </Text>
-
-      {!!item.description && (
-        <Text numberOfLines={2} style={{ marginTop: 6, color: "#666" }}>
-          {item.description}
-        </Text>
-      )}
-
-      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-        <TouchableOpacity
-          onPress={() => onAdd(item)}
-          style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}
-        >
-          <Text style={{ textAlign: "center" }}>Agregar</Text>
-        </TouchableOpacity>
-
-        <Link href={`/product/${item.id}`} asChild>
-          <TouchableOpacity style={{ flex: 1, padding: 10, borderRadius: 8, borderWidth: 1 }}>
-            <Text style={{ textAlign: "center" }}>Ver detalle</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
-    </View>
-  )}
-  ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-  ListEmptyComponent={() => (
-    <View style={{ padding: 24, alignItems: "center" }}>
-      <Text style={{ color: "#666" }}>No hay productos para mostrar.</Text>
-    </View>
-  )}
-  refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-
-  /* 👇 claves anti-bloqueo */
-  style={{ flex: 1 }}
-  contentContainerStyle={{ paddingBottom: 120, paddingTop: 4, flexGrow: 1 }}
-  showsVerticalScrollIndicator={false}
-  keyboardDismissMode="on-drag"
-  keyboardShouldPersistTaps="handled"
-  nestedScrollEnabled
-
-  /* performance */
-  initialNumToRender={8}
-  windowSize={10}
-  removeClippedSubviews
-/>
-
-    </View>
+        data={visible}
+        keyExtractor={(p) => p.id}
+        renderItem={({ item }) => (
+          <ProductCard
+            title={item.name}
+            priceQ={`Precio: ${moneyQ(Number.isFinite(item.price) ? item.price : 0)}${item.unit ? ` / ${item.unit}` : ""}`}
+            desc={item.description}
+            imageUrl={item.imageUrl}
+            onAdd={() => onAdd(item)}
+            onDetail={() => router.push(`/product/${item.id}`)}
+          />
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ListEmptyComponent={() => (
+          <View style={{ padding: 24, alignItems: "center" }}>
+            <Text style={styles.cardDesc}>No hay productos para mostrar.</Text>
+          </View>
+        )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.gridContent}
+        showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        initialNumToRender={8}
+        windowSize={10}
+        removeClippedSubviews
+      />
+    </BaseScreen>
   );
 }

@@ -3,13 +3,10 @@ import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  Pressable,
   TextInput,
   FlatList,
   SafeAreaView,
   Keyboard,
-  Image,
   ImageSourcePropType,
   StatusBar,
 } from "react-native";
@@ -18,12 +15,16 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useApi } from "../../lib/api";
 import { useCart } from "../../stores/cart";
 import SearchBar from "../components/SearchBar";
+import Chip from "../components/ui/Chip";
+import Fab from "../components/ui/Fab";
+import CategoryCard from "../components/ui/CategoryCard";
+import { styles } from "../../styles/styles";
 
 type Category = {
   slug: "maquinaria" | "fertilizantes" | "herramientas" | "frutas" | "verduras" | "semillas";
   title: string;
   desc: string;
-  emoji: string; // fallback si no existe PNG
+  emoji: string;
 };
 
 // Coloca estos PNG en: assets/icons/categorias/*.png
@@ -71,7 +72,7 @@ export default function Home() {
   const goProfile = () => router.push("/profile");
   const goCart = () => router.push("/cart");
 
-  // Demo robusto (casteo para evitar choques de tipos del store)
+  // Demo robusto
   const addDemo = () => {
     const i1 = { id: "demo-1", title: "Producto demo 1", price_cents: 1500, quantity: 1, image_url: "" } as any;
     const i2 = { id: "demo-2", title: "Producto demo 2", price_cents: 2300, quantity: 1, image_url: "" } as any;
@@ -82,22 +83,16 @@ export default function Home() {
   const renderCategory = ({ item }: { item: Category }) => {
     const src = ICONS[item.slug];
     return (
-      <Pressable
+      <CategoryCard
+        title={item.title}
+        desc={item.desc}
+        src={src}
+        emoji={item.emoji}
         onPress={() => router.push({ pathname: "/categories", params: { c: item.slug } })}
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      >
-        {src ? (
-          <Image source={src} style={styles.cardImg} resizeMode="contain" />
-        ) : (
-          <Text style={styles.cardIcon} accessibilityLabel={`${item.title} icono`}>{item.emoji}</Text>
-        )}
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardDesc}>{item.desc}</Text>
-      </Pressable>
+      />
     );
   };
 
-  // Verificación segura de health.ok
   const apiDisconnected =
     health &&
     typeof health === "object" &&
@@ -118,7 +113,7 @@ export default function Home() {
           </View>
         </View>
 
-        {/* Search (componente) */}
+        {/* Search */}
         <SearchBar
           ref={inputRef}
           value={query}
@@ -134,13 +129,13 @@ export default function Home() {
 
         {/* Acciones rápidas */}
         <View style={styles.quickRow}>
-          <QuickChip label={`Checkout (${totalItems})`} onPress={goCheckout} />
-          <QuickChip label="Pedidos" onPress={goOrders} />
-          <QuickChip label="Perfil" onPress={goProfile} />
-          <QuickChip label="Agregar demo" onPress={addDemo} />
+          <Chip label={`Checkout (${totalItems})`} onPress={goCheckout} />
+          <Chip label="Pedidos" onPress={goOrders} />
+          <Chip label="Perfil" onPress={goProfile} />
+          <Chip label="Agregar demo" onPress={addDemo} />
         </View>
 
-        {/* Grid de categorías */}
+        {/* Categorías */}
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Nuestras categorías</Text>
         </View>
@@ -155,14 +150,7 @@ export default function Home() {
         />
 
         {/* FAB carrito */}
-        <Pressable onPress={goCart} style={styles.fab} accessibilityRole="button">
-          <Text style={styles.fabIcon}>🛒</Text>
-          {totalItems > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{totalItems}</Text>
-            </View>
-          )}
-        </Pressable>
+        <Fab onPress={goCart} count={totalItems} />
 
         {/* Aviso API */}
         {apiDisconnected && (
@@ -174,124 +162,3 @@ export default function Home() {
     </SafeAreaView>
   );
 }
-
-function QuickChip({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}>
-      <Text style={styles.chipText}>{label}</Text>
-    </Pressable>
-  );
-}
-
-// 🎨 Paleta clara (similar al sitio)
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#f2f6f3" },
-  container: { flex: 1, paddingHorizontal: 16, paddingTop: 8 },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  brand: { color: "#1e2e24", fontSize: 20, fontWeight: "700" },
-  brandLeaf: { marginRight: 6, fontSize: 16 },
-  sessionPill: {
-    backgroundColor: "#e6f4ea",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  sessionText: { color: "#2e7d32", fontWeight: "700", fontSize: 12 },
-
-  // 🔻 Estilos de búsqueda fueron movidos al componente SearchBar
-
-  hero: { marginTop: 14, marginBottom: 12 },
-  title: { color: "#1f2d22", fontSize: 22, fontWeight: "800" },
-  subtitle: { color: "#567a68", marginTop: 4, fontSize: 13 },
-
-  quickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8, marginBottom: 12 },
-  chip: {
-    backgroundColor: "#eef7f1",
-    borderColor: "#cfe6d7",
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  chipPressed: { opacity: 0.8 },
-  chipText: { color: "#1f4c37", fontWeight: "700", fontSize: 12 },
-
-  sectionHead: { marginTop: 6, marginBottom: 6 },
-  sectionTitle: { color: "#1f4c37", fontSize: 16, fontWeight: "800" },
-
-  gridContent: { paddingBottom: 120 },
-  gridRow: { gap: 12 },
-  card: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-    borderColor: "#dfeee6",
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
-    minHeight: 130,
-    justifyContent: "flex-start",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardPressed: { opacity: 0.95 },
-  cardImg: { width: 56, height: 56, marginBottom: 8, alignSelf: "flex-start" },
-  cardIcon: { fontSize: 28, marginBottom: 8 }, // fallback emoji
-  cardTitle: { color: "#1f2d22", fontWeight: "800", fontSize: 16, marginBottom: 4 },
-  cardDesc: { color: "#5c7e6c", fontSize: 12, lineHeight: 16 },
-
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 28,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#2e7d32",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabIcon: { fontSize: 24, color: "white" },
-  badge: {
-    position: "absolute",
-    top: -6,
-    right: -6,
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#ffffff",
-    borderWidth: 2,
-    borderColor: "#2e7d32",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 4,
-  },
-  badgeText: { color: "#2e7d32", fontSize: 12, fontWeight: "800" },
-
-  apiWarn: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    bottom: 96,
-    backgroundColor: "#fdeaea",
-    borderColor: "#f7b4b4",
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-  },
-  apiWarnText: { color: "#7a2f2f", textAlign: "center", fontWeight: "700" },
-});
